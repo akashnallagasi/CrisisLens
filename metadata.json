@@ -1,0 +1,8 @@
+{
+  "name": "CrisisLens",
+  "description": "Evidence-Aware Multimodal Disaster Intelligence Platform synthesizing heterogeneous ground reports, sensor telemetry, and aerial reconnaissance with chronological timeline reconstruction, emergency dispatch, and FEMA/NDMA protocols.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

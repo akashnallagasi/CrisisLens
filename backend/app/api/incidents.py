@@ -27,7 +27,6 @@ router = APIRouter(prefix="/incidents", tags=["Incidents & Evidence"])
 
 @router.get("", response_model=List[IncidentResponse])
 def list_incidents(db: Session = Depends(get_db)):
-def list_incidents(db: Session = Depends(get_db)):
     """
     Returns all registered disaster incidents with aggregated evidence, timeline counts,
     and composite uncertainty scores.
@@ -61,7 +60,6 @@ def list_incidents(db: Session = Depends(get_db)):
     return results
 
 @router.post("", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
-def create_incident(data: IncidentCreate, db: Session = Depends(get_db)):
 def create_incident(data: IncidentCreate, db: Session = Depends(get_db)):
     """
     Registers a new disaster incident.
@@ -118,7 +116,6 @@ def get_incident_detail(incident_id: str, db: Session = Depends(get_db)):
     uncertainty = timeline_service.calculate_incident_uncertainty(evidence_items)
     latest_obs = max([e.observed_at for e in evidence_items], default=inc.created_at)
 
-    # Format evidence items with parsed factors
     ev_responses = []
     for e in evidence_items:
         factors = None
@@ -148,7 +145,6 @@ def get_incident_detail(incident_id: str, db: Session = Depends(get_db)):
             )
         )
 
-    # Format timeline events
     tl_responses = [
         TimelineEventResponse(
             id=t.id,
@@ -164,7 +160,6 @@ def get_incident_detail(incident_id: str, db: Session = Depends(get_db)):
         for t in inc.timeline_events
     ]
 
-    # Format AI analyses
     ai_responses = []
     for a in inc.ai_analyses:
         feats = None
@@ -231,11 +226,6 @@ async def submit_evidence(
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Submits a multi-source evidence item (with optional photo).
-    Enforces distinct observation and submission timestamps, safe file validation,
-    and automatic timeline integration.
-    """
     inc = db.query(Incident).filter(Incident.id == incident_id).first()
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -249,8 +239,6 @@ async def submit_evidence(
         saved_filename, file_mime, file_bytes = await validate_and_save_upload(file)
 
     now = datetime.utcnow()
-    
-    # Calculate baseline uncertainty based on source
     credibility_map = {
         "citizen_report": 0.65,
         "first_responder": 0.92,
@@ -287,7 +275,6 @@ async def submit_evidence(
     db.add(evidence)
     db.flush()
 
-    # Automatically integrate this evidence into the chronological timeline
     timeline_event = TimelineEvent(
         incident_id=incident_id,
         evidence_id=evidence.id,
@@ -325,21 +312,15 @@ async def submit_evidence(
 
 @router.get("/evidence/{evidence_id}/file")
 def get_evidence_file(evidence_id: str, db: Session = Depends(get_db)):
-    """
-    Safely retrieves an uploaded evidence file.
-    Validates that the file exists and is within the upload sandbox.
-    """
     evidence = db.query(EvidenceItem).filter(EvidenceItem.id == evidence_id).first()
     if not evidence or not evidence.file_path:
         raise HTTPException(status_code=404, detail="Evidence file not found")
 
     file_path = (settings.UPLOAD_DIR / evidence.file_path).resolve()
-    # Path traversal protection
     if not str(file_path).startswith(str(settings.UPLOAD_DIR.resolve())):
         raise HTTPException(status_code=403, detail="Access denied")
 
     if not file_path.exists():
-        # Fallback to sample placeholder image if local file is synthetic
         placeholder_svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
             <rect width="100%" height="100%" fill="#1e293b"/>
             <text x="50%" y="45%" fill="#94a3b8" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">CrisisLens Evidence Capture</text>
@@ -360,10 +341,6 @@ def update_human_verification(
     data: HumanVerificationUpdate,
     db: Session = Depends(get_db)
 ):
-    """
-    Human-in-the-loop verification endpoint. Allows an authorized emergency responder
-    to verify or flag an AI assessment.
-    """
     analysis = (
         db.query(AIAnalysis)
         .filter(AIAnalysis.id == analysis_id, AIAnalysis.incident_id == incident_id)
@@ -381,14 +358,6 @@ def update_human_verification(
 
 @router.post("/{incident_id}/analyze", response_model=AIAnalysisResponse, status_code=status.HTTP_201_CREATED)
 async def analyze_incident_endpoint(incident_id: str, db: Session = Depends(get_db)):
-    """
-    Meta Muse Spark multimodal analysis for an incident.
-    Extracts:
-    a) Primary Hazard & Damage Type
-    b) Visible Structural/Flood Evidence
-    c) AI Uncertainty & Confidence Rating
-    d) Evidence-aware RAG disaster protocols from FEMA / NDMA
-    """
     inc = db.query(Incident).filter(Incident.id == incident_id).first()
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -427,7 +396,6 @@ async def analyze_incident_endpoint(incident_id: str, db: Session = Depends(get_
     )
     db.add(analysis)
 
-    # Inferred timeline event
     if result.confidence_score >= 0.70:
         inferred_tl = TimelineEvent(
             incident_id=inc.id,
@@ -466,10 +434,6 @@ async def analyze_incident_endpoint(incident_id: str, db: Session = Depends(get_
 
 @router.get("/{incident_id}/protocols")
 def get_incident_protocols(incident_id: str, db: Session = Depends(get_db)):
-    """
-    Returns relevant FEMA and NDMA disaster response guidelines and standard operating
-    procedures for this incident based on its hazard classification and evidence.
-    """
     inc = db.query(Incident).filter(Incident.id == incident_id).first()
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -491,7 +455,7 @@ def get_incident_protocols(incident_id: str, db: Session = Depends(get_db)):
 
 from pydantic import BaseModel
 class ResponderActionRequest(BaseModel):
-    action: str  # mark_verified, flag_more_evidence, escalate_priority
+    action: str
     notes: Optional[str] = None
 
 @router.post("/{incident_id}/action")
@@ -500,12 +464,6 @@ def execute_responder_action(
     data: ResponderActionRequest,
     db: Session = Depends(get_db)
 ):
-    """
-    Executes first-responder verification action:
-    - mark_verified: Approves ground-truth evidence & marks AI assessment verified
-    - flag_more_evidence: Flags gaps and requests aerial/ground recon
-    - escalate_priority: Elevates incident severity to CRITICAL
-    """
     inc = db.query(Incident).filter(Incident.id == incident_id).first()
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -514,18 +472,15 @@ def execute_responder_action(
     user_note = sanitize_text(data.notes or "", 500)
 
     if data.action == "mark_verified":
-        # Mark all attached evidence as verified
         for ev in inc.evidence_items:
             ev.verification_status = "verified_by_official"
             ev.uncertainty_score = max(0.05, ev.uncertainty_score * 0.4)
         
-        # Mark latest AI analysis verified
         if inc.ai_analyses:
             latest_ai = inc.ai_analyses[0]
             latest_ai.human_verified = True
             latest_ai.human_notes = user_note or "Verified on-site by Incident Command Officer"
 
-        # Add timeline milestone
         tl = TimelineEvent(
             incident_id=inc.id,
             evidence_id=None,

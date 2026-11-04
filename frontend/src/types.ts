@@ -102,6 +102,36 @@ export interface AIStatusInfo {
   disclaimer: string;
 }
 
+export type EmergencyCategory = 'police' | 'hospital' | 'fema_ndma';
+export type TrustStatus = 'pending_verification' | 'dispatched_verified';
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  category: EmergencyCategory;
+  phone: string;
+  alt_phone?: string | null;
+  address: string;
+  latitude: number;
+  longitude: number;
+  coverage_radius_km: number;
+  availability_status: string;
+  trust_status: TrustStatus;
+  specialization?: string | null;
+  created_at?: string;
+  last_dispatched_at?: string | null;
+  distance_km?: number | null;
+}
+
+export interface DispatchLog {
+  id: string;
+  contact_id: string;
+  previous_status: string;
+  new_status: string;
+  notes?: string | null;
+  created_at: string;
+}
+
 export interface RescueContact {
   id: string;
   name: string;

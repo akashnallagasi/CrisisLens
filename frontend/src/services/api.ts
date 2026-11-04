@@ -1,4 +1,4 @@
-import { Incident, IncidentDetail, EvidenceItem, AIAnalysis, AIStatusInfo } from '../types';
+import { Incident, IncidentDetail, EvidenceItem, AIAnalysis, AIStatusInfo, EmergencyContact, DispatchLog } from '../types';
 
 const API_BASE = '/api';
 
@@ -94,6 +94,35 @@ export const api = {
     const query = contactType && contactType !== 'all' ? `?contact_type=${contactType}` : '';
     const res = await fetch(`${API_BASE}/rescue-contacts${query}`);
     if (!res.ok) throw new Error('Failed to retrieve emergency rescue contacts');
+    return res.json();
+  },
+
+  // Nearby police, hospitals, FEMA/NDMA nodes (proxied to http://localhost:8000/api/contacts/)
+  async getEmergencyContacts(category?: string): Promise<EmergencyContact[]> {
+    const query = category && category !== 'all' ? `?category=${encodeURIComponent(category)}` : '';
+    const res = await fetch(`${API_BASE}/contacts/${query}`);
+    if (!res.ok) throw new Error('Failed to retrieve emergency dispatch contacts');
+    return res.json();
+  },
+
+  async dispatchEmergencyContact(contactId: string, notes?: string): Promise<EmergencyContact> {
+    const res = await fetch(`${API_BASE}/contacts/${contactId}/dispatch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        notes: notes || 'Emergency trigger initiated from CrisisLens dispatch panel.',
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Failed to log responder dispatch');
+    }
+    return res.json();
+  },
+
+  async getDispatchLogs(contactId: string): Promise<DispatchLog[]> {
+    const res = await fetch(`${API_BASE}/contacts/${contactId}/logs`);
+    if (!res.ok) throw new Error('Failed to retrieve dispatch audit log');
     return res.json();
   },
 

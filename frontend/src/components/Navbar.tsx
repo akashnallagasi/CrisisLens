@@ -1,9 +1,9 @@
 import React from 'react';
-import { Shield, Eye, Cpu, PlusCircle, AlertTriangle, Activity } from 'lucide-react';
+import { Eye, Cpu, PlusCircle, Activity, Radio } from 'lucide-react';
 
 interface NavbarProps {
-  currentTab: 'dashboard' | 'submit' | 'ai';
-  setCurrentTab: (tab: 'dashboard' | 'submit' | 'ai') => void;
+  currentTab: 'dashboard' | 'submit' | 'ai' | 'dispatch';
+  setCurrentTab: (tab: 'dashboard' | 'submit' | 'ai' | 'dispatch') => void;
   activeCount: number;
   isAiLive: boolean;
 }
@@ -53,6 +53,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="ml-1.5 px-1.5 py-0.2 bg-slate-800 text-slate-300 text-xs rounded-full">
                 {activeCount}
               </span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('dispatch')}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                currentTab === 'dispatch'
+                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <Radio className="w-4 h-4 text-sky-400" />
+              <span>Dispatch</span>
             </button>
 
             <button

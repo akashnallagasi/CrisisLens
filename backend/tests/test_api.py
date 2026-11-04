@@ -65,6 +65,43 @@ def test_ai_safety_invariant_filter():
     is_safe_ok, _ = meta_client.validate_safety_invariants("Water levels have begun to plateau, but floodwaters remain high.")
     assert is_safe_ok is True
 
+def test_emergency_contacts_seeded():
+    response = client.get("/api/contacts/")
+    assert response.status_code == 200
+    contacts = response.json()
+    assert len(contacts) >= 6
+    categories = {c["category"] for c in contacts}
+    assert {"police", "hospital", "fema_ndma"}.issubset(categories)
+    for contact in contacts:
+        assert contact["name"]
+        assert contact["phone"]
+        assert contact["address"]
+        assert "latitude" in contact and "longitude" in contact
+        assert contact["trust_status"] in ("pending_verification", "dispatched_verified")
+
+
+def test_dispatch_logs_human_verification():
+    listed = client.get("/api/contacts/?category=police")
+    assert listed.status_code == 200
+    contact = listed.json()[0]
+    contact_id = contact["id"]
+
+    dispatch = client.post(
+        f"/api/contacts/{contact_id}/dispatch",
+        json={"notes": "Field commander confirmed unit rollout."},
+    )
+    assert dispatch.status_code == 200
+    body = dispatch.json()
+    assert body["trust_status"] == "dispatched_verified"
+    assert body["availability_status"] == "Deployed"
+
+    logs = client.get(f"/api/contacts/{contact_id}/logs")
+    assert logs.status_code == 200
+    entries = logs.json()
+    assert len(entries) >= 1
+    assert entries[0]["new_status"] == "dispatched_verified"
+
+
 def test_evidence_submission_latency_tracking():
     # Submit evidence with an observation time 2 hours ago
     past_obs = (datetime.utcnow() - timedelta(hours=2)).isoformat()

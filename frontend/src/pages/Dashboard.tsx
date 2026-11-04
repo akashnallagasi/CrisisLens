@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Incident } from '../types';
 import { MapViewer } from '../components/MapViewer';
+import { EmergencyDispatchPanel } from '../components/EmergencyDispatchPanel';
 import { UncertaintyIndicator } from '../components/UncertaintyIndicator';
 import { AlertTriangle, Droplets, Wind, ShieldAlert, ChevronRight, Filter, Clock, Eye, CheckCircle2 } from 'lucide-react';
 
@@ -237,6 +238,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       </div>
+
+      <EmergencyDispatchPanel />
     </div>
   );
 };

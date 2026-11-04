@@ -3,8 +3,106 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app.models.incident import Incident, EvidenceItem, TimelineEvent, AIAnalysis
 from app.models.rescue_contacts import RescueContact
+from app.models.emergency_contact import EmergencyContact
 from app.core.config import settings
 from app.services.rag_service import rag_service
+
+def seed_emergency_contacts(db: Session):
+    """
+    Seeds nearby police control rooms, city general hospitals, and FEMA/NDMA nodes.
+    """
+    if db.query(EmergencyContact).count() > 0:
+        return
+
+    contacts = [
+        EmergencyContact(
+            id="ec-police-control-01",
+            name="City Police Control Room",
+            category="police",
+            phone="100",
+            alt_phone="112",
+            address="State Police HQ, 1 Fort St. George, Coastal Metro Sector",
+            latitude=13.0820,
+            longitude=80.2700,
+            coverage_radius_km=40.0,
+            availability_status="24/7 Active",
+            trust_status="pending_verification",
+            specialization="City-wide incident command, traffic cordon, missing persons desk",
+        ),
+        EmergencyContact(
+            id="ec-police-coastal-02",
+            name="Coastal Sector Police Station",
+            category="police",
+            phone="044-23452345",
+            alt_phone="100",
+            address="Harbor Road Junction, Bayside Estuary, Sector 4",
+            latitude=13.0895,
+            longitude=80.2785,
+            coverage_radius_km=12.0,
+            availability_status="24/7 Active",
+            trust_status="pending_verification",
+            specialization="Flood-zone patrol, boat launch escort, shoreline evacuation",
+        ),
+        EmergencyContact(
+            id="ec-hospital-cgh-01",
+            name="City General Hospital",
+            category="hospital",
+            phone="108",
+            alt_phone="044-25305000",
+            address="Government Rajaji Campus, Central Medical District",
+            latitude=13.0765,
+            longitude=80.2480,
+            coverage_radius_km=25.0,
+            availability_status="24/7 Active",
+            trust_status="pending_verification",
+            specialization="Trauma bay, mass-casualty surge beds, dialysis & ICU overflow",
+        ),
+        EmergencyContact(
+            id="ec-hospital-trauma-02",
+            name="District Trauma & Emergency Hospital",
+            category="hospital",
+            phone="102",
+            alt_phone="044-24715511",
+            address="Ring Highway Medical Park, South Junction",
+            latitude=13.0510,
+            longitude=80.2140,
+            coverage_radius_km=20.0,
+            availability_status="24/7 Active",
+            trust_status="pending_verification",
+            specialization="Orthopedic trauma, burn unit, ambulance staging apron",
+        ),
+        EmergencyContact(
+            id="ec-ndma-neoc-01",
+            name="NDMA National Emergency Operations Centre",
+            category="fema_ndma",
+            phone="1078",
+            alt_phone="011-26701728",
+            address="NDMA Bhawan Coordination Node, State SEOC Link Desk",
+            latitude=13.0700,
+            longitude=80.2500,
+            coverage_radius_km=75.0,
+            availability_status="24/7 Active",
+            trust_status="pending_verification",
+            specialization="National disaster protocol, inter-agency resource request, NDMA SOP relay",
+        ),
+        EmergencyContact(
+            id="ec-fema-node-01",
+            name="FEMA / NDMA Mutual-Aid Liaison Node",
+            category="fema_ndma",
+            phone="1070",
+            alt_phone="1-800-621-3362",
+            address="International Mutual-Aid Desk, Greater Metropolitan EOC",
+            latitude=13.0640,
+            longitude=80.2410,
+            coverage_radius_km=80.0,
+            availability_status="Standby",
+            trust_status="pending_verification",
+            specialization="Cross-border logistics, FEMA ICS templates, satellite comms fallback",
+        ),
+    ]
+    db.add_all(contacts)
+    db.commit()
+
 
 def seed_rescue_contacts(db: Session):
     """
@@ -106,6 +204,7 @@ def seed_synthetic_incidents(db: Session):
     4. Transparent uncertainty and AI assessment indicators
     """
     seed_rescue_contacts(db)
+    seed_emergency_contacts(db)
 
     if db.query(Incident).count() > 0:
         return

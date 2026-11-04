@@ -9,6 +9,8 @@ from app.core.database import engine, Base, SessionLocal
 from app.api.incidents import router as incidents_router
 from app.api.analysis import router as analysis_router
 from app.api.rescue import router as rescue_router
+from app.api.contacts import router as contacts_router
+from app.models.emergency_contact import EmergencyContact, DispatchLog  # noqa: F401
 from app.services.seed_data import seed_synthetic_incidents
 
 logging.basicConfig(
@@ -56,6 +58,7 @@ app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="upl
 app.include_router(incidents_router, prefix=settings.API_V1_PREFIX)
 app.include_router(analysis_router, prefix=settings.API_V1_PREFIX)
 app.include_router(rescue_router, prefix=settings.API_V1_PREFIX)
+app.include_router(contacts_router, prefix=settings.API_V1_PREFIX)
 
 @app.get("/health", tags=["System Health"])
 def health_check():

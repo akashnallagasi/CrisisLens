@@ -6,10 +6,11 @@ import { Dashboard } from './pages/Dashboard';
 import { SubmitReport } from './pages/SubmitReport';
 import { IncidentDetail } from './pages/IncidentDetail';
 import { AIIntelligence } from './pages/AIIntelligence';
+import { EmergencyDispatchPanel } from './components/EmergencyDispatchPanel';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'dashboard' | 'submit' | 'ai'>('dashboard');
+  const [currentTab, setCurrentTab] = useState<'dashboard' | 'submit' | 'ai' | 'dispatch'>('dashboard');
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -118,6 +119,8 @@ export const App: React.FC = () => {
             onReportSubmitted={handleReportSubmitted}
             onCancel={() => setCurrentTab('dashboard')}
           />
+        ) : currentTab === 'dispatch' ? (
+          <EmergencyDispatchPanel />
         ) : (
           <AIIntelligence
             incidents={incidents}

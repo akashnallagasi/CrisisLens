@@ -55,10 +55,9 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="uploads")
 
 # Include API routes
-app.include_router(incidents_router, prefix=settings.API_V1_PREFIX)
-app.include_router(analysis_router, prefix=settings.API_V1_PREFIX)
-app.include_router(rescue_router, prefix=settings.API_V1_PREFIX)
-app.include_router(contacts_router, prefix=settings.API_V1_PREFIX)
+app.include_router(incidents.router, prefix="/api")
+app.include_router(analysis.router, prefix="/api")
+app.include_router(contacts.router, prefix="/api")
 
 @app.get("/health", tags=["System Health"])
 def health_check():

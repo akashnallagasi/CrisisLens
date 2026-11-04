@@ -25,7 +25,8 @@ from app.services.rag_service import rag_service
 
 router = APIRouter(prefix="/incidents", tags=["Incidents & Evidence"])
 
-@router.get("/", response_model=List[IncidentResponse])
+@router.get("", response_model=List[IncidentResponse])
+def list_incidents(db: Session = Depends(get_db)):
 def list_incidents(db: Session = Depends(get_db)):
     """
     Returns all registered disaster incidents with aggregated evidence, timeline counts,
@@ -59,7 +60,8 @@ def list_incidents(db: Session = Depends(get_db)):
         )
     return results
 
-@router.post("/", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
+def create_incident(data: IncidentCreate, db: Session = Depends(get_db)):
 def create_incident(data: IncidentCreate, db: Session = Depends(get_db)):
     """
     Registers a new disaster incident.
